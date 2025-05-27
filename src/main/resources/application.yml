@@ -1,0 +1,35 @@
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate.dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password:
+      timeout: 2000
+
+app:
+  admin:
+    code: ${ADMIN_CODE}
+
+jwt:
+  secret-key: ${JWT_SECRET_KEY}
+  access-token-time: ${JWT_ACCESS_TOKEN_TIME}
+  refresh-token-time: ${JWT_REFRESH_TOKEN_TIME}
+
+oauth:
+  providers:
+    kakao:
+      clientId: ${KAKAO_CLIENT_ID}
+      redirectUri: ${KAKAO_REDIRECT_URI}
+      tokenUri: ${TOKEN_URI}
+      userinfoUri: ${KAKAO_USERINFO_URI}
