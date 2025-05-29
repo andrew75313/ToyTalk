@@ -5,7 +5,6 @@ import com.example.toytalk.domain.chatroom.dto.ChatroomResponseDTO;
 import com.example.toytalk.domain.chatroom.dto.EnterChatroomRequestDTO;
 import com.example.toytalk.domain.chatroom.service.ChatroomService;
 import com.example.toytalk.global.security.user.UserDetailsImpl;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
