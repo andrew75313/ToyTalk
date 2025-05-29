@@ -2,8 +2,10 @@ package com.example.toytalk.domain.chatroom.controller;
 
 import com.example.toytalk.domain.chatroom.dto.ChatRoomRequestDTO;
 import com.example.toytalk.domain.chatroom.dto.ChatroomResponseDTO;
+import com.example.toytalk.domain.chatroom.dto.EnterChatroomRequestDTO;
 import com.example.toytalk.domain.chatroom.service.ChatroomService;
 import com.example.toytalk.global.security.user.UserDetailsImpl;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -39,5 +41,34 @@ public class ChatroomController {
                                                @AuthenticationPrincipal UserDetailsImpl userDetails) {
         chatroomService.deleteChatroom(UUID.fromString(chatroomId), userDetails.getUser());
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{chatroomId}/enter")
+    public ResponseEntity<Void> enterChatroom(
+            @PathVariable String chatroomId,
+            @RequestBody EnterChatroomRequestDTO request,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+
+        boolean verified = chatroomService.enterChatroom(UUID.fromString(chatroomId), request.password(), userDetails.getUser());
+
+        if (!verified) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        } else {
+            return ResponseEntity.status(HttpStatus.OK).build();
+        }
+    }
+
+    @PostMapping("/{chatroomId}/exit")
+    public ResponseEntity<Void> exitChatroom(
+            @PathVariable String chatroomId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+
+        boolean exited = chatroomService.exitChatroom(UUID.fromString(chatroomId), userDetails.getUser());
+
+        if (!exited) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        } else {
+            return ResponseEntity.status(HttpStatus.OK).build();
+        }
     }
 }
