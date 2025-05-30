@@ -95,7 +95,10 @@ public class ChatroomService {
             return false;
         }
 
-        if(!chatroomMemberRepository.isUserInChatroom(user.getId(), chatroomId)) {
+        ChatroomMember member = chatroomMemberRepository.findJoinedMemberInChatroom(chatroomId, user.getId())
+                .orElse(null);
+
+        if(member == null) {
             ChatroomMember chatroomMember = ChatroomMember.builder()
                     .chatroomId(chatroomId)
                     .userId(user.getId())
