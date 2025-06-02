@@ -3,11 +3,10 @@ package com.example.toytalk.global.security.handler;
 import com.example.toytalk.domain.users.entity.User;
 import com.example.toytalk.global.security.user.UserDetailsImpl;
 import com.example.toytalk.global.security.util.JwtUtil;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -15,7 +14,6 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
@@ -37,14 +35,14 @@ public class JwtAuthenticationSuccessHandler implements AuthenticationSuccessHan
                 Duration.ofMillis(jwtUtil.getRefreshTokenTime())
         );
 
-        response.addHeader(JwtUtil.AUTHORIZATION_HEADER, accessToken);
-        response.addHeader(JwtUtil.REFRESHTOKEN_HEADER, refreshToken);
+        Cookie accessTokenCookie = new Cookie(JwtUtil.AUTHORIZATION_HEADER, accessToken.substring(7));
+        accessTokenCookie.setPath("/");
+        response.addCookie(accessTokenCookie);
 
-        response.setContentType("application/json;charset=UTF-8");
-        String json = new ObjectMapper().writeValueAsString(
-                Map.of("statusCode", 200, "msg", "Success to Login.")
-        );
+        Cookie refreshTokenCookie = new Cookie(JwtUtil.REFRESHTOKEN_HEADER, refreshToken.substring(7));
+        refreshTokenCookie.setPath("/");
+        response.addCookie(refreshTokenCookie);
 
-        response.getWriter().write(json);
+        response.sendRedirect("/");
     }
 }

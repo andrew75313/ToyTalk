@@ -71,6 +71,9 @@ dependencies {
 
     // web socket
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
+    // thymeleaf
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 }
 
 tasks.named('test') {

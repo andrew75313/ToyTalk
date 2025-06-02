@@ -42,7 +42,7 @@ public class OAuthService {
         OAuthUserInfoDTO kakaoUserInfo = getKakaoUserInfo(kakaoAccessToken);
 
         User kakaoUser = userRepository.findByOauthId(kakaoUserInfo.getId().toString()).orElseGet(
-                ()-> registerOAuthUser("kakao", kakaoUserInfo)
+                () -> registerOAuthUser("kakao", kakaoUserInfo)
         );
 
         String accessToken = jwtUtil.createAccessToken(kakaoUser);
