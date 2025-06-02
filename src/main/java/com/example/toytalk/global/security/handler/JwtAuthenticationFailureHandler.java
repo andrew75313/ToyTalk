@@ -29,7 +29,13 @@ public class JwtAuthenticationFailureHandler implements AuthenticationFailureHan
             msg = "로그인에 실패했습니다.";
         }
 
-        request.setAttribute("errorMessage", msg);
-        request.getRequestDispatcher("/login?error=true").forward(request, response);
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType("application/json;charset=UTF-8");
+
+        String json = new ObjectMapper().writeValueAsString(
+                Map.of("statusCode", 401, "msg", msg)
+        );
+
+        response.getWriter().write(json);
     }
 }

@@ -2,8 +2,6 @@ package com.example.toytalk.domain.oauth.controller;
 
 import com.example.toytalk.domain.oauth.dto.LoginResponse;
 import com.example.toytalk.domain.oauth.service.OAuthService;
-import com.example.toytalk.global.security.jwt.JwtProperties;
-import com.example.toytalk.global.security.oauth.OAuthProperties;
 import com.example.toytalk.global.security.util.JwtUtil;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -25,8 +23,16 @@ public class OAuthController {
 
     @GetMapping("/kakao/callback")
     public String kakaoLogin(@RequestParam String code,
-                             HttpServletResponse response) throws IOException {
-        LoginResponse loginResponse = oauthService.kakaoLogin(code);
+                             HttpServletResponse response,
+                             Model model) throws IOException {
+        LoginResponse loginResponse;
+
+        try {
+            loginResponse = oauthService.kakaoLogin(code);
+        } catch (Exception e) {
+            model.addAttribute("errorMessage", e.getMessage());
+            return "signup";
+        }
 
         Cookie accessTokenCookie = new Cookie(JwtUtil.AUTHORIZATION_HEADER, loginResponse.getAccessToken().substring(7));
         accessTokenCookie.setPath("/");
