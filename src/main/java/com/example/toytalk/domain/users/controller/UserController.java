@@ -13,6 +13,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 import java.util.UUID;
@@ -40,11 +41,12 @@ public class UserController {
     }
 
     @PostMapping("/signup")
-    public String signup(@Valid @RequestBody SignupRequestDTO requestDTO,
+    public String signup(@Valid SignupRequestDTO requestDTO,
                          BindingResult bindingResult,
+                         RedirectAttributes redirectAttributes,
                          Model model) {
         if (bindingResult.hasErrors()) {
-            model.addAttribute("errors", bindingResult.getFieldErrors());
+            model.addAttribute("errorMessage", bindingResult.getAllErrors().get(0).getDefaultMessage());
             return "signup";
         }
 
@@ -55,9 +57,8 @@ public class UserController {
             return "signup";
         }
 
-        model.addAttribute("successMessage", "회원가입이 완료되었습니다. 로그인해주세요.");
-
-        return "login";
+        redirectAttributes.addFlashAttribute("successMessage", "회원가입이 완료되었습니다. 로그인해주세요.");
+        return "redirect:/api/users/login";
     }
 
     // ADDITIONAL FEATURES
