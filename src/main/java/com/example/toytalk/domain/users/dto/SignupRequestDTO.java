@@ -19,8 +19,4 @@ public class SignupRequestDTO {
     @NotBlank(message = "이메일은 필수 입력해주세요.")
     @Email(message = "유효한 이메일 주소를 입력해주세요.")
     private String email;
-
-    @NotBlank(message = "휴대전화번호는 필수 입력해주세요.")
-    @Pattern(regexp = "^\\d{3}-\\d{3,4}-\\d{4}$", message = "휴대전화번호는 010-1234-5678 형식으로 입력해주세요.")
-    private String phoneNumber;
 }
