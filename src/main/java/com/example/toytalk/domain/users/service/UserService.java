@@ -29,7 +29,6 @@ public class UserService {
         String username = requestDTO.getUsername();
         String password = passwordEncoder.encode(requestDTO.getPassword());
         String email = requestDTO.getEmail();
-        String phoneNumber = requestDTO.getPhoneNumber();
 
         if (userRepository.findByUsername(username).isPresent()) {
             throw new IllegalArgumentException("아이디가 이미 존재합니다.");
@@ -43,7 +42,6 @@ public class UserService {
                 .username(username)
                 .password(password)
                 .email(email)
-                .phoneNumber(phoneNumber)
                 .role(UserRole.USER)
                 .status(UserStatus.ACTIVATED)
                 .build();
@@ -78,10 +76,6 @@ public class UserService {
 
         if (!newEmail.isEmpty()) {
             foundUser.updateEmail(newEmail);
-        }
-
-        if (!newPhoneNumber.isEmpty()) {
-            foundUser.updatePhoneNumber(newPhoneNumber);
         }
 
         return new UserResponseDTO(foundUser);

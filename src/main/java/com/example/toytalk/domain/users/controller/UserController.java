@@ -1,91 +1,78 @@
 package com.example.toytalk.domain.users.controller;
 
-import com.example.toytalk.domain.users.assembler.UserModelAssembler;
 import com.example.toytalk.domain.users.dto.SignupRequestDTO;
 import com.example.toytalk.domain.users.dto.UserResponseDTO;
 import com.example.toytalk.domain.users.dto.UserUpdateRequestDTO;
 import com.example.toytalk.domain.users.service.UserService;
+import com.example.toytalk.global.security.oauth.OAuthProperties;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.hateoas.CollectionModel;
-import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 import java.util.UUID;
 
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
-
-@RestController
+@Controller
 @RequiredArgsConstructor
 @RequestMapping("/api/users")
 public class UserController {
 
     private final UserService userService;
-    private final UserModelAssembler userModelAssembler;
+    private final OAuthProperties oauthProperties;
+
+    @GetMapping("/login")
+    public String loginPage(Model model) {
+        OAuthProperties.Provider kakao = oauthProperties.getProviders().get("kakao");
+        model.addAttribute("clientId", kakao.getClientId());
+        model.addAttribute("redirectUri", kakao.getRedirectUri());
+
+        return "login";
+    }
+
+    @GetMapping("/signup")
+    public String signupPage() {
+        return "signup";
+    }
 
     @PostMapping("/signup")
-    public ResponseEntity<UserResponseDTO> createUser(@Valid @RequestBody SignupRequestDTO requestDTO) {
-        UserResponseDTO responseDTO = userService.createUser(requestDTO);
-        return new ResponseEntity<>(responseDTO, HttpStatus.CREATED);
+    public String signup(@Valid SignupRequestDTO requestDTO,
+                         BindingResult bindingResult,
+                         RedirectAttributes redirectAttributes,
+                         Model model) {
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("errorMessage", bindingResult.getAllErrors().get(0).getDefaultMessage());
+            return "signup";
+        }
+
+        try {
+            userService.createUser(requestDTO);
+        } catch (Exception e) {
+            model.addAttribute("errorMessage", e.getMessage());
+            return "signup";
+        }
+
+        redirectAttributes.addFlashAttribute("successMessage", "회원가입이 완료되었습니다. 로그인해주세요.");
+        return "redirect:/api/users/login";
     }
 
-    /**
-     * HATEOAS 적용
-     * @param userId
-     * @return Activated 사용자 반환
-     */
+    // ADDITIONAL FEATURES
     @GetMapping("/{userId}")
-    public ResponseEntity<EntityModel<UserResponseDTO>> getUser(@PathVariable UUID userId) {
+    public ResponseEntity<UserResponseDTO> getUser(@PathVariable UUID userId) {
         UserResponseDTO responseDTO = userService.getUser(userId);
-
-        EntityModel<UserResponseDTO> userModel = userModelAssembler.toModel(responseDTO);
-
-        return new ResponseEntity<>(userModel ,HttpStatus.OK);
+        return new ResponseEntity<>(responseDTO, HttpStatus.OK);
     }
 
-    /**
-     * HATEOAS 적용
-     * @return Activated 사용자 반환
-     */
     @GetMapping("")
-    public ResponseEntity<CollectionModel<EntityModel<UserResponseDTO>>> getAllUsers() {
+    public ResponseEntity<List<UserResponseDTO>> getAllUsers() {
         List<UserResponseDTO> responseDTOList = userService.getAllUsers();
-
-        List<EntityModel<UserResponseDTO>> userModels = responseDTOList.stream()
-                .map(userModelAssembler::toModel)
-                .toList();
-
-        CollectionModel<EntityModel<UserResponseDTO>> collectionModel =
-                CollectionModel.of(userModels,
-                        linkTo(methodOn(UserController.class).getAllUsers()).withSelfRel());
-
-        return new ResponseEntity<>(collectionModel, HttpStatus.OK);
+        return new ResponseEntity<>(responseDTOList, HttpStatus.OK);
     }
-
-    /**
-     * HATEOAS 미적용
-     * @param userId
-     * @return Activated 사용자 반환
-     */
-//    @GetMapping("/{userId}")
-//    public ResponseEntity<UserResponseDTO> getUser(@PathVariable UUID userId) {
-//        UserResponseDTO responseDTO = userService.getUser(userId);
-//        return new ResponseEntity<>(responseDTO, HttpStatus.OK);
-//    }
-
-    /**
-     * HATEOAS 미적용
-     * @return Activated 사용자 반환
-     */
-//    @GetMapping("")
-//    public ResponseEntity<List<UserResponseDTO>> getAllUsers() {
-//        List<UserResponseDTO> responseDTOList = userService.getAllUsers();
-//        return new ResponseEntity<>(responseDTOList, HttpStatus.OK);
-//    }
 
     @PutMapping("/{userId}/update")
     public ResponseEntity<UserResponseDTO> updateUser(@PathVariable UUID userId,

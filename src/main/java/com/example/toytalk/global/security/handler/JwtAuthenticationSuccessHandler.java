@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -42,7 +41,7 @@ public class JwtAuthenticationSuccessHandler implements AuthenticationSuccessHan
 
         response.setContentType("application/json;charset=UTF-8");
         String json = new ObjectMapper().writeValueAsString(
-                Map.of("statusCode", 200, "msg", "Success to Login.")
+                Map.of("statusCode", 200, "msg", "로그인 성공")
         );
 
         response.getWriter().write(json);

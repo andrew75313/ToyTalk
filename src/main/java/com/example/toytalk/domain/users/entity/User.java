@@ -31,8 +31,6 @@ public class User extends Timestamped {
 
     private String oauthId;
 
-    private String phoneNumber;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserRole role;
@@ -43,10 +41,6 @@ public class User extends Timestamped {
 
     public void updateEmail(String email) {
         this.email = email;
-    }
-
-    public void updatePhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
     }
 
     public void updateStatus(UserStatus status) {

@@ -1,19 +1,18 @@
 package com.example.toytalk.domain.oauth.controller;
 
 import com.example.toytalk.domain.oauth.dto.LoginResponse;
+import com.example.toytalk.domain.oauth.dto.OAuthUserInfoDTO;
 import com.example.toytalk.domain.oauth.service.OAuthService;
-import com.example.toytalk.domain.users.dto.UserResponseDTO;
 import com.example.toytalk.global.security.util.JwtUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.Map;
 
 @Controller
 @RequiredArgsConstructor
@@ -22,17 +21,40 @@ public class OAuthController {
 
     private final OAuthService oauthService;
 
+
     @GetMapping("/kakao/callback")
-    public ResponseEntity<UserResponseDTO> kakaoLogin(@RequestParam String code) throws IOException {
-        LoginResponse loginResponse = oauthService.kakaoLogin(code);
+    public String kakaoCallback(@RequestParam String code,
+                                Model model) throws IOException {
+        OAuthUserInfoDTO userInfo = oauthService.getKakaoUser(code);
+        model.addAttribute("userInfo", userInfo);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.add(JwtUtil.AUTHORIZATION_HEADER, loginResponse.getAccessToken());
-        headers.add(JwtUtil.REFRESHTOKEN_HEADER, loginResponse.getRefreshToken());
+        return "kakao-login";
+    }
 
-        return ResponseEntity.ok()
-                .headers(headers)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(new UserResponseDTO(loginResponse.getUser()));
+    @PostMapping("/kakao/login")
+    public void kakaoLogin(@RequestBody OAuthUserInfoDTO userInfo,
+                           HttpServletResponse response) throws IOException {
+        try {
+            LoginResponse loginResponse = oauthService.kakaoLogin(userInfo);
+
+            response.addHeader(JwtUtil.AUTHORIZATION_HEADER, loginResponse.getAccessToken());
+            response.addHeader(JwtUtil.REFRESHTOKEN_HEADER, loginResponse.getRefreshToken());
+
+            response.setContentType("application/json;charset=UTF-8");
+            String json = new ObjectMapper().writeValueAsString(
+                    Map.of("statusCode", 200, "msg", "로그인 성공")
+            );
+
+            response.getWriter().write(json);
+        } catch (Exception e) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json;charset=UTF-8");
+
+            String json = new ObjectMapper().writeValueAsString(
+                    Map.of("statusCode", 401, "msg", e.getMessage())
+            );
+
+            response.getWriter().write(json);
+        }
     }
 }
