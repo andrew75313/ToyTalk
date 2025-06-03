@@ -10,11 +10,13 @@ import com.example.toytalk.domain.chatroom.repository.ChatroomRepository;
 import com.example.toytalk.domain.users.entity.User;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cglib.core.Local;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.rmi.registry.LocateRegistry;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -27,10 +29,35 @@ public class ChatroomService {
     private final ChatroomMemberRepository chatroomMemberRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public List<ChatroomResponseDTO> getAllChatrooms() {
-        List<Chatroom> chatroomList = chatroomRepository.findAllActivated();
+    public List<ChatroomResponseDTO> getAllChatrooms(int page) {
+        int pageSize = 10;
+        int pageNumber = page > 1 ? page - 1 : 0;
 
-        return chatroomList.stream().map(ChatroomResponseDTO::new).toList();
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("createdAt").descending());
+        Page<Chatroom> chatRoomPage = chatroomRepository.findAllActivated(pageable);
+
+        return chatRoomPage.stream()
+                .map(chatroom -> {
+                    long memberCount = chatroomMemberRepository.countAllJoinedMember(chatroom.getId());
+                    ChatroomResponseDTO dto = new ChatroomResponseDTO(chatroom);
+                    dto.setMemberCount(memberCount);
+                    return dto;
+                })
+                .toList();
+    }
+
+
+    public ChatroomResponseDTO getChatroom(UUID chatroomId) {
+        Chatroom chatroom = chatroomRepository.findActivatedRoomById(chatroomId).orElseThrow(
+                () -> new IllegalArgumentException("존재하지 않는 대화방입니다.")
+        );
+
+        Long memberCount = chatroomMemberRepository.countAllJoinedMember(chatroomId);
+
+        ChatroomResponseDTO chatroomResponseDTO = new ChatroomResponseDTO(chatroom);
+        chatroomResponseDTO.setMemberCount(memberCount);
+
+        return chatroomResponseDTO;
     }
 
     public ChatroomResponseDTO createChatroom(ChatRoomRequestDTO request, User user) {
@@ -91,14 +118,14 @@ public class ChatroomService {
             return false;
         }
 
-        if(!passwordEncoder.matches(chatroom.getPassword(), password)) {
+        if (!passwordEncoder.matches(chatroom.getPassword(), password)) {
             return false;
         }
 
         ChatroomMember member = chatroomMemberRepository.findJoinedMemberInChatroom(chatroomId, user.getId())
                 .orElse(null);
 
-        if(member == null) {
+        if (member == null) {
             ChatroomMember chatroomMember = ChatroomMember.builder()
                     .chatroomId(chatroomId)
                     .userId(user.getId())

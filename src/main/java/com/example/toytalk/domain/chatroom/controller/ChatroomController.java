@@ -23,9 +23,15 @@ public class ChatroomController {
     private final ChatroomService chatroomService;
 
     @GetMapping
-    public ResponseEntity<List<ChatroomResponseDTO>> getAllChatrooms() {
-        List<ChatroomResponseDTO> chatrooms = chatroomService.getAllChatrooms();
+    public ResponseEntity<List<ChatroomResponseDTO>> getAllChatrooms(@RequestParam(defaultValue = "1") int page) {
+        List<ChatroomResponseDTO> chatrooms = chatroomService.getAllChatrooms(page);
         return ResponseEntity.status(HttpStatus.OK).body(chatrooms);
+    }
+
+    @GetMapping("/{chatroomId}")
+    public ResponseEntity<ChatroomResponseDTO> getChatroomById(@PathVariable String chatroomId) {
+        ChatroomResponseDTO chatroom = chatroomService.getChatroom(UUID.fromString(chatroomId));
+        return ResponseEntity.status(HttpStatus.OK).body(chatroom);
     }
 
     @PostMapping

@@ -15,4 +15,7 @@ public interface ChatroomMemberRepository extends JpaRepository<ChatroomMember, 
 
     @Query("SELECT c FROM ChatroomMember c WHERE c.chatroomId = :chatroomId AND c.userId = :userId AND c.isJoined = TRUE")
     Optional<ChatroomMember> findJoinedMemberInChatroom(UUID chatroomId, UUID id);
+
+    @Query("SELECT COUNT(*) FROM ChatroomMember c WHERE c.chatroomId = :chatroomId AND c.isJoined = TRUE")
+    Long countAllJoinedMember(UUID chatroomId);
 }
