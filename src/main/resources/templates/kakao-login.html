@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Kakao Login</title>
+</head>
+<body>
+<p>로그인 처리 중</p>
+
+<script th:inline="javascript">
+
+    const userInfo = {
+        id: [[${userInfo.id}]],
+        email: [[${#strings.quote(userInfo.email)}]]
+    };
+
+    console.log("userInfo", userInfo);
+
+    fetch("/api/oauth/kakao/login", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(userInfo)
+    }).then(async res => {
+        const accessToken = res.headers.get("Authorization");
+        const refreshToken = res.headers.get("refreshToken");
+
+        if (res.ok && accessToken && refreshToken) {
+            localStorage.setItem("accessToken", accessToken);
+            localStorage.setItem("refreshToken", refreshToken);
+            alert("로그인 성공");
+            window.location.href = "/index.html";
+        } else {
+            const json = await res.json();
+            alert("로그인 실패: " + json.msg);
+            window.location.href = "/login.html";
+        }
+    }).catch(err => {
+        alert("에러 발생: " + err.message);
+        window.location.href = "/login.html";
+    });
+</script>
+</body>
+</html>

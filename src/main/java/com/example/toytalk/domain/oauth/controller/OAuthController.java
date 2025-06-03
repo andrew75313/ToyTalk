@@ -1,18 +1,18 @@
 package com.example.toytalk.domain.oauth.controller;
 
 import com.example.toytalk.domain.oauth.dto.LoginResponse;
+import com.example.toytalk.domain.oauth.dto.OAuthUserInfoDTO;
 import com.example.toytalk.domain.oauth.service.OAuthService;
 import com.example.toytalk.global.security.util.JwtUtil;
-import jakarta.servlet.http.Cookie;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.Map;
 
 @Controller
 @RequiredArgsConstructor
@@ -21,27 +21,40 @@ public class OAuthController {
 
     private final OAuthService oauthService;
 
+
     @GetMapping("/kakao/callback")
-    public String kakaoLogin(@RequestParam String code,
-                             HttpServletResponse response,
-                             Model model) throws IOException {
-        LoginResponse loginResponse;
+    public String kakaoCallback(@RequestParam String code,
+                                Model model) throws IOException {
+        OAuthUserInfoDTO userInfo = oauthService.getKakaoUser(code);
+        model.addAttribute("userInfo", userInfo);
 
+        return "kakao-login";
+    }
+
+    @PostMapping("/kakao/login")
+    public void kakaoLogin(@RequestBody OAuthUserInfoDTO userInfo,
+                           HttpServletResponse response) throws IOException {
         try {
-            loginResponse = oauthService.kakaoLogin(code);
+            LoginResponse loginResponse = oauthService.kakaoLogin(userInfo);
+
+            response.addHeader(JwtUtil.AUTHORIZATION_HEADER, loginResponse.getAccessToken());
+            response.addHeader(JwtUtil.REFRESHTOKEN_HEADER, loginResponse.getRefreshToken());
+
+            response.setContentType("application/json;charset=UTF-8");
+            String json = new ObjectMapper().writeValueAsString(
+                    Map.of("statusCode", 200, "msg", "로그인 성공")
+            );
+
+            response.getWriter().write(json);
         } catch (Exception e) {
-            model.addAttribute("errorMessage", e.getMessage());
-            return "signup";
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json;charset=UTF-8");
+
+            String json = new ObjectMapper().writeValueAsString(
+                    Map.of("statusCode", 401, "msg", e.getMessage())
+            );
+
+            response.getWriter().write(json);
         }
-
-        Cookie accessTokenCookie = new Cookie(JwtUtil.AUTHORIZATION_HEADER, loginResponse.getAccessToken().substring(7));
-        accessTokenCookie.setPath("/");
-        response.addCookie(accessTokenCookie);
-
-        Cookie refreshTokenCookie = new Cookie(JwtUtil.REFRESHTOKEN_HEADER, loginResponse.getRefreshToken().substring(7));
-        refreshTokenCookie.setPath("/");
-        response.addCookie(refreshTokenCookie);
-
-        return "redirect:/";
     }
 }

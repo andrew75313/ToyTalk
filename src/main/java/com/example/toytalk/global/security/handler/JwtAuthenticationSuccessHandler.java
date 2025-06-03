@@ -4,7 +4,6 @@ import com.example.toytalk.domain.users.entity.User;
 import com.example.toytalk.global.security.user.UserDetailsImpl;
 import com.example.toytalk.global.security.util.JwtUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -37,15 +36,8 @@ public class JwtAuthenticationSuccessHandler implements AuthenticationSuccessHan
                 Duration.ofMillis(jwtUtil.getRefreshTokenTime())
         );
 
-        Cookie accessTokenCookie = new Cookie(JwtUtil.AUTHORIZATION_HEADER, accessToken.substring(7));
-        accessTokenCookie.setHttpOnly(true);
-        accessTokenCookie.setPath("/");
-        response.addCookie(accessTokenCookie);
-
-        Cookie refreshTokenCookie = new Cookie(JwtUtil.REFRESHTOKEN_HEADER, refreshToken.substring(7));
-        refreshTokenCookie.setHttpOnly(true);
-        refreshTokenCookie.setPath("/");
-        response.addCookie(refreshTokenCookie);
+        response.addHeader(JwtUtil.AUTHORIZATION_HEADER, accessToken);
+        response.addHeader(JwtUtil.REFRESHTOKEN_HEADER, refreshToken);
 
         response.setContentType("application/json;charset=UTF-8");
         String json = new ObjectMapper().writeValueAsString(

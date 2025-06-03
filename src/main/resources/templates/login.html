@@ -9,7 +9,7 @@
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"
             integrity="sha256-2Pmvv0kuTBOenSvLm6bvfBSSHrUJ+3A7x6P5Ebd07/g="
             crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.5/dist/js.cookie.min.js"></script>
+    <script src="/js/jwt.js"></script>
     <title>로그인 페이지</title>
 </head>
 <body>
@@ -19,17 +19,27 @@
 
     <!-- 카카오 로그인 -->
     <button id="login-kakao-btn"
-            style="background-color: #FFD700; color: black; "
-            onclick="location.href='https://kauth.kakao.com/oauth/authorize?client_id=[[${clientId}]]&redirect_uri=[[${redirectUri}]]&response_type=code'">
+            style="background-color: #FFD700; color: black;">
         카카오로 로그인하기
     </button>
+
+    <!-- JavaScript 영역에서 변수 주입 및 클릭 처리 -->
+    <script th:inline="javascript">
+        const clientId = [[${clientId}]];
+        const redirectUri = [[${redirectUri}]];
+        const kakaoUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code`;
+
+        document.getElementById('login-kakao-btn').addEventListener('click', function () {
+            location.href = kakaoUrl;
+        });
+    </script>
 
     <!-- 회원가입 버튼 -->
     <button id="login-signup-btn" onclick="location.href='/api/users/signup'">
         회원 가입하기
     </button>
 
-    <!-- 일반 로그인 form: Spring Security 기본 로그인 처리 URL 사용 -->
+    <!-- 일반 로그인 form -->
     <form id="login-form-tag" action="/api/login" method="post">
         <div class="login-id-label">아이디</div>
         <input type="text" name="username" placeholder="USERNAME" class="login-input-box" required>
@@ -39,74 +49,71 @@
 
         <button type="submit" id="login-id-submit">로그인</button>
     </form>
-
-    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-    <script>
-        $(document).ready(function() {
-            $('#login-form-tag').submit(function(event) {
-                event.preventDefault();
-
-                const data = {
-                    username: $('input[name="username"]').val(),
-                    password: $('input[name="password"]').val()
-                };
-
-                $.ajax({
-                    url: '/api/login',
-                    method: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify(data),
-                    xhrFields: {
-                        withCredentials: true
-                    },
-                    success: function(response) {
-                        alert(response.msg || '로그인 성공!');
-                        window.location.href = '/';
-                    },
-                    error: function(xhr) {
-                        let errorMsg = "로그인 실패";
-                        try {
-                            const res = JSON.parse(xhr.responseText);
-                            if (res.msg) {
-                                errorMsg = res.msg;
-                            }
-                        } catch (e) {
-                        }
-                        alert(errorMsg);
-                    }
-                });
-            });
-        });
-    </script>
-
-
-
-
-
 </div>
 
-<!-- alert 메시지 출력 스크립트 -->
+<!-- 로그인 및 메시지 처리 스크립트 -->
 <script>
     $(document).ready(function () {
         // 로그인 페이지 진입 시 기존 토큰 제거
-        Cookies.remove('accessToken', { path: '/' });
-        Cookies.remove('refreshToken', { path: '/' });
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
 
-        // errorMessage가 있으면 alert로 띄움 (로그인 실패 시)
+        // 메시지 처리
         const errorMessageElem = document.getElementById('error-message');
         if (errorMessageElem) {
             alert(errorMessageElem.textContent);
         }
 
-        // successMessage가 있으면 alert로 띄움 (회원가입 성공 후 로그인 페이지 이동 시)
         const successMessageElem = document.getElementById('success-message');
         if (successMessageElem) {
             alert(successMessageElem.textContent);
         }
+
+        // 로그인 폼 제출
+        $('#login-form-tag').submit(function (event) {
+            event.preventDefault();
+
+            const data = {
+                username: $('input[name="username"]').val(),
+                password: $('input[name="password"]').val()
+            };
+
+            $.ajax({
+                url: '/api/login',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                xhrFields: {
+                    withCredentials: true
+                },
+                success: function (response, textStatus, xhr) {
+                    const accessToken = xhr.getResponseHeader('Authorization');
+                    const refreshToken = xhr.getResponseHeader('refreshToken');
+
+                    if (accessToken && refreshToken) {
+                        localStorage.setItem('accessToken', accessToken);
+                        localStorage.setItem('refreshToken', refreshToken);
+                    }
+
+                    alert(response.msg || '로그인 성공');
+                    window.location.href = '/';
+                },
+                error: function (xhr) {
+                    let errorMsg = "로그인 실패";
+                    try {
+                        const res = JSON.parse(xhr.responseText);
+                        if (res.msg) {
+                            errorMsg = res.msg;
+                        }
+                    } catch (e) {}
+                    alert(errorMsg);
+                }
+            });
+        });
     });
 </script>
 
-<!-- 서버에서 errorMessage, successMessage가 존재할 때만 렌더링됨 -->
+<!-- 메시지 (Thymeleaf 바인딩용) -->
 <span th:if="${errorMessage}" id="error-message" style="display:none" th:text="${errorMessage}"></span>
 <span th:if="${successMessage}" id="success-message" style="display:none" th:text="${successMessage}"></span>
 

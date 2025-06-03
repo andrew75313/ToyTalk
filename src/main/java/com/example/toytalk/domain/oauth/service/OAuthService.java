@@ -35,14 +35,17 @@ public class OAuthService {
     private final RedisTemplate redisTemplate;
     private final RestTemplate restTemplate;
 
-    public LoginResponse kakaoLogin(String code) throws JsonProcessingException {
+    public OAuthUserInfoDTO getKakaoUser(String code) throws JsonProcessingException {
 
         String kakaoAccessToken = getToken(code);
 
-        OAuthUserInfoDTO kakaoUserInfo = getKakaoUserInfo(kakaoAccessToken);
+        return  getKakaoUserInfo(kakaoAccessToken);
+    }
 
-        User kakaoUser = userRepository.findByOauthId(kakaoUserInfo.getId().toString()).orElseGet(
-                () -> registerOAuthUser("kakao", kakaoUserInfo)
+
+    public LoginResponse kakaoLogin(OAuthUserInfoDTO userInfo) {
+        User kakaoUser = userRepository.findByOauthId(userInfo.getId()).orElseGet(
+                () -> registerOAuthUser("kakao", userInfo)
         );
 
         String accessToken = jwtUtil.createAccessToken(kakaoUser);
@@ -56,7 +59,6 @@ public class OAuthService {
 
         return new LoginResponse(kakaoUser, accessToken, refreshToken);
     }
-
 
     private User registerOAuthUser(String provider, OAuthUserInfoDTO infoDto) {
         String oauthId = infoDto.getId().toString();
@@ -98,7 +100,7 @@ public class OAuthService {
 
         JsonNode jsonNode = new ObjectMapper().readTree(response.getBody());
 
-        Long id = jsonNode.get("id").asLong();
+        String id = jsonNode.get("id").toString();
 //        String email = jsonNode.get("kakao_account")
 //                .get("email").asText();
         String email = null;
