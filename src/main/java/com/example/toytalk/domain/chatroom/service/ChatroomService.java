@@ -8,6 +8,7 @@ import com.example.toytalk.domain.chatroom.entity.ChatroomStatus;
 import com.example.toytalk.domain.chatroom.repository.ChatroomMemberRepository;
 import com.example.toytalk.domain.chatroom.repository.ChatroomRepository;
 import com.example.toytalk.domain.users.entity.User;
+import com.example.toytalk.global.dto.PageResponseDTO;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -29,14 +30,14 @@ public class ChatroomService {
     private final ChatroomMemberRepository chatroomMemberRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public List<ChatroomResponseDTO> getAllChatrooms(int page) {
+    public PageResponseDTO getAllChatrooms(int page) {
         int pageSize = 10;
         int pageNumber = page > 1 ? page - 1 : 0;
 
         Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("createdAt").descending());
         Page<Chatroom> chatRoomPage = chatroomRepository.findAllActivated(pageable);
 
-        return chatRoomPage.stream()
+        List<ChatroomResponseDTO> content = chatRoomPage.stream()
                 .map(chatroom -> {
                     long memberCount = chatroomMemberRepository.countAllJoinedMember(chatroom.getId());
                     ChatroomResponseDTO dto = new ChatroomResponseDTO(chatroom);
@@ -44,6 +45,8 @@ public class ChatroomService {
                     return dto;
                 })
                 .toList();
+
+        return new PageResponseDTO(content, page, content.size(), chatRoomPage.getTotalPages(), chatRoomPage.getTotalElements());
     }
 
 

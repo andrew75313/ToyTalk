@@ -4,6 +4,7 @@ import com.example.toytalk.domain.chatroom.dto.ChatRoomRequestDTO;
 import com.example.toytalk.domain.chatroom.dto.ChatroomResponseDTO;
 import com.example.toytalk.domain.chatroom.dto.EnterChatroomRequestDTO;
 import com.example.toytalk.domain.chatroom.service.ChatroomService;
+import com.example.toytalk.global.dto.PageResponseDTO;
 import com.example.toytalk.global.security.user.UserDetailsImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -23,8 +23,8 @@ public class ChatroomController {
     private final ChatroomService chatroomService;
 
     @GetMapping
-    public ResponseEntity<List<ChatroomResponseDTO>> getAllChatrooms(@RequestParam(defaultValue = "1") int page) {
-        List<ChatroomResponseDTO> chatrooms = chatroomService.getAllChatrooms(page);
+    public ResponseEntity<PageResponseDTO> getAllChatrooms(@RequestParam(defaultValue = "1") int page) {
+        PageResponseDTO chatrooms = chatroomService.getAllChatrooms(page);
         return ResponseEntity.status(HttpStatus.OK).body(chatrooms);
     }
 
